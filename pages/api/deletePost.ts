@@ -22,7 +22,21 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
+    // Get post slug before deleting for revalidation
+    const post = await client.fetch(`*[_type == "post" && _id == $id][0]{slug}`, { id });
+    
     await client.delete(id);
+    
+    // Trigger revalidation
+    try {
+      await res.revalidate('/');
+      if (post?.slug?.current) {
+        await res.revalidate(`/blog/${post.slug.current}`);
+      }
+    } catch (revalidateError) {
+      console.error("Revalidation error:", revalidateError);
+    }
+    
     return res.status(200).json({ success: true, message: "Post deleted successfully" });
   } catch (error: any) {
     console.error("Error deleting post:", error.message);

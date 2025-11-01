@@ -22,6 +22,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
+    // Get old post to revalidate old slug if slug changes
+    const oldPost = await client.fetch(`*[_type == "post" && _id == $id][0]{slug}`, { id });
+
     const updates: any = {};
     if (title) {
       updates.title = title;
@@ -34,6 +37,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const updatedPost = await client.patch(id).set(updates).commit();
     
+    // Trigger revalidation
+    try {
+      await res.revalidate('/');
+      if (oldPost?.slug?.current) {
+        await res.revalidate(`/blog/${oldPost.slug.current}`);
+      }
+      if (updatedPost?.slug?.current) {
+        await res.revalidate(`/blog/${updatedPost.slug.current}`);
+      }
+    } catch (revalidateError) {
+      console.error("Revalidation error:", revalidateError);
+    }
+
     return res.status(200).json({ success: true, post: updatedPost });
   } catch (error: any) {
     console.error("Error updating post:", error.message);

@@ -19,7 +19,10 @@ export const getStaticProps: GetStaticProps = async () => {
     description
   }`;
   const posts: Post[] = await client.fetch(query);
-  return { props: { posts } };
+  return { 
+    props: { posts },
+    revalidate: 10 // Revalidate every 10 seconds
+  };
 };
 
 export default function Home({ posts }: { posts: Post[] }) {

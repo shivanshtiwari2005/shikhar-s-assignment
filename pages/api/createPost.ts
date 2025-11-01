@@ -30,6 +30,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       slug: { _type: "slug", current: title.toLowerCase().replace(/\s+/g, "-") },
     });
 
+    // Trigger revalidation of the home page
+    try {
+      await res.revalidate('/');
+      await res.revalidate(`/blog/${newPost.slug.current}`);
+    } catch (revalidateError) {
+      console.error("Revalidation error:", revalidateError);
+      // Don't fail the request if revalidation fails
+    }
+
     return res.status(200).json({ success: true, post: newPost });
   } catch (error: any) {
     console.error("Error creating post:", error.message);

@@ -35,7 +35,7 @@ export const getStaticPaths: GetStaticPaths = async () => {
     params: { slug: s.slug },
   }));
 
-  return { paths, fallback: false };
+  return { paths, fallback: 'blocking' }; // Generate new posts on-demand
 };
 
 // --------------------
@@ -60,7 +60,14 @@ export const getStaticProps: GetStaticProps = async ({ params }) => {
     { slug }
   );
 
-  return { props: { post } };
+  if (!post) {
+    return { notFound: true };
+  }
+
+  return { 
+    props: { post },
+    revalidate: 10 // Revalidate every 10 seconds
+  };
 };
 
 // --------------------
