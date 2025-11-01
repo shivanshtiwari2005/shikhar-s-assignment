@@ -6,7 +6,7 @@ import fs from "fs";
 const client = createClient({
   projectId: process.env.NEXT_PUBLIC_SANITY_PROJECT_ID || "9oefwg7b",
   dataset: process.env.NEXT_PUBLIC_SANITY_DATASET || "production",
-  token: process.env.SANITY_API_TOKEN,
+  token: process.env.SANITY_API_TOKEN || process.env.NEXT_PUBLIC_SANITY_API_TOKEN,
   apiVersion: process.env.NEXT_PUBLIC_SANITY_API_VERSION || "2025-10-31",
   useCdn: false,
 });
