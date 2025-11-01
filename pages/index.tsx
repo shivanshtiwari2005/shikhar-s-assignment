@@ -16,8 +16,12 @@ export default function Home({ initialPosts }: { initialPosts: any[] }) {
   async function refreshData() {
     setIsRefreshing(true);
     try {
-      const updated = await client.fetch(`*[_type == "post"] | order(_createdAt desc){_id, title, slug, mainImage, description}`);
-      setPosts(updated);
+      const response = await fetch('/api/getPosts');
+      if (!response.ok) {
+        throw new Error('Failed to fetch posts');
+      }
+      const data = await response.json();
+      setPosts(data.posts);
       toast.success("Blogs refreshed!");
     } catch (error) {
       console.error("Failed to refresh blogs:", error);
