@@ -1,26 +1,40 @@
 import { client } from "../src/sanity/lib/client";
 import { urlFor } from "../src/sanity/lib/image";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import toast, { Toaster } from "react-hot-toast";
 
-export async function getStaticProps() {
+export async function getServerSideProps() {
   const posts = await client.fetch(`*[_type == "post"] | order(_createdAt desc){_id, title, slug, mainImage, description}`);
-  return { props: { initialPosts: posts }, revalidate: 60 };
+  return { props: { initialPosts: posts } };
 }
 
 export default function Home({ initialPosts }: { initialPosts: any[] }) {
   const [posts, setPosts] = useState(initialPosts);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   async function refreshData() {
+    setIsRefreshing(true);
     try {
       const updated = await client.fetch(`*[_type == "post"] | order(_createdAt desc){_id, title, slug, mainImage, description}`);
       setPosts(updated);
       toast.success("Blogs refreshed!");
-    } catch {
+    } catch (error) {
+      console.error("Failed to refresh blogs:", error);
       toast.error("Failed to refresh blogs!");
+    } finally {
+      setIsRefreshing(false);
     }
   }
+
+  // Auto-refresh every 5 seconds when on the page
+  useEffect(() => {
+    const interval = setInterval(() => {
+      refreshData();
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, []);
 
   function getImageUrl(post: any) {
     if (post.mainImage?.asset?._ref || post.mainImage?.asset?._id) {
@@ -55,9 +69,10 @@ export default function Home({ initialPosts }: { initialPosts: any[] }) {
             </Link>
             <button
               onClick={refreshData}
-              className="px-6 py-3 bg-white text-gray-700 font-semibold rounded-xl hover:bg-gray-50 btn-animate shadow-lg border border-gray-200"
+              disabled={isRefreshing}
+              className="px-6 py-3 bg-white text-gray-700 font-semibold rounded-xl hover:bg-gray-50 btn-animate shadow-lg border border-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              🔄 Refresh
+              {isRefreshing ? "🔄 Refreshing..." : "🔄 Refresh"}
             </button>
           </div>
         </div>

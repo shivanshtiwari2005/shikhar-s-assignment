@@ -1,25 +1,24 @@
 import { client } from "../../src/sanity/lib/client";
 import { urlFor } from "../../src/sanity/lib/image";
-import { GetStaticPaths, GetStaticProps } from "next";
+import type { GetServerSideProps } from "next";
 import { PortableText } from "@portabletext/react";
 import toast, { Toaster } from "react-hot-toast";
 import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/router";
 
-export const getStaticPaths: GetStaticPaths = async () => {
-  const slugs = await client.fetch(`*[_type == "post" && defined(slug.current)][].slug.current`);
-  const paths = slugs.map((slug: string) => ({ params: { slug } }));
-  return { paths, fallback: "blocking" };
-};
-
-export const getStaticProps: GetStaticProps = async ({ params }) => {
+export const getServerSideProps: GetServerSideProps = async ({ params }) => {
   const { slug } = params!;
   const post = await client.fetch(
     `*[_type == "post" && slug.current == $slug][0]{_id, title, description, mainImage, body}`,
     { slug }
   );
-  return { props: { post }, revalidate: 60 };
+  
+  if (!post) {
+    return { notFound: true };
+  }
+  
+  return { props: { post } };
 };
 
 export default function BlogPage({ post }: { post: any }) {
@@ -76,6 +75,7 @@ export default function BlogPage({ post }: { post: any }) {
 
       toast.success("Blog updated!");
       setIsEditing(false);
+      // Force reload with fresh data
       setTimeout(() => router.reload(), 1000);
     } catch (error) {
       console.error("Error updating blog:", error);
@@ -104,7 +104,10 @@ export default function BlogPage({ post }: { post: any }) {
 
       toast.success("Blog deleted!");
       setShowDeleteConfirm(false);
-      setTimeout(() => router.push("/"), 1500);
+      // Force a hard refresh to home page
+      setTimeout(() => {
+        router.push("/").then(() => router.reload());
+      }, 1000);
     } catch (error) {
       console.error("Error deleting blog:", error);
       toast.error("Error deleting blog: " + (error as Error).message);

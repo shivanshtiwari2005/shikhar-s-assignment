@@ -7,6 +7,6 @@ export const client = createClient({
   projectId,
   dataset,
   apiVersion,
-  useCdn: true, // Use CDN for better performance with public data
+  useCdn: false, // Disable CDN to always get fresh data
   perspective: 'published',
 })

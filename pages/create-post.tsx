@@ -51,7 +51,10 @@ export default function CreateBlog() {
       }
 
       toast.success("Blog created!");
-      setTimeout(() => router.push("/"), 1500);
+      // Force a hard refresh to get latest data
+      setTimeout(() => {
+        router.push("/").then(() => router.reload());
+      }, 1000);
     } catch (error) {
       console.error("Error creating blog:", error);
       toast.error("Error creating blog: " + (error as Error).message);
