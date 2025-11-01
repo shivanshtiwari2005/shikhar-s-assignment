@@ -31,15 +31,6 @@ export default function Home({ initialPosts }: { initialPosts: any[] }) {
     }
   }
 
-  // Auto-refresh every 5 seconds when on the page
-  useEffect(() => {
-    const interval = setInterval(() => {
-      refreshData();
-    }, 5000);
-
-    return () => clearInterval(interval);
-  }, []);
-
   function getImageUrl(post: any) {
     if (post.mainImage?.asset?._ref || post.mainImage?.asset?._id) {
       try {
