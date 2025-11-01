@@ -1,8 +1,11 @@
 import { GetStaticPaths, GetStaticProps } from "next";
+import { useRouter } from "next/router";
+import Link from "next/link";
 import { client } from "../../src/sanity/lib/client";
 import { PortableText } from "@portabletext/react";
 
 type Post = {
+  _id: string;
   title: string;
   description?: string;
   slug: { current: string };
@@ -42,6 +45,7 @@ export const getStaticProps: GetStaticProps = async ({ params }) => {
   const slug = params?.slug as string;
   const post: Post = await client.fetch(
     `*[_type == "post" && slug.current == $slug][0]{
+      _id,
       title,
       description,
       body,
@@ -103,8 +107,58 @@ const components = {
 // Blog Page Component
 // --------------------
 export default function Blog({ post }: { post: Post }) {
+  const router = useRouter();
+
+  const handleDelete = async () => {
+    if (!confirm(`Are you sure you want to delete "${post.title}"?`)) {
+      return;
+    }
+
+    try {
+      const response = await fetch("/api/deletePost", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: post._id }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        alert("Post deleted successfully!");
+        router.push("/");
+      } else {
+        alert(`Failed to delete post: ${data.error}`);
+      }
+    } catch (error: any) {
+      alert(`Error: ${error.message}`);
+    }
+  };
+
   return (
     <div className="max-w-3xl mx-auto p-6 text-white">
+      <div className="flex justify-between items-start mb-6">
+        <Link
+          href="/"
+          className="text-blue-400 hover:text-blue-300 text-sm"
+        >
+          ← Back to Posts
+        </Link>
+        <div className="flex gap-2">
+          <Link
+            href={`/edit-post/${post._id}`}
+            className="bg-yellow-500 hover:bg-yellow-600 text-white text-sm py-1 px-4 rounded transition"
+          >
+            Edit
+          </Link>
+          <button
+            onClick={handleDelete}
+            className="bg-red-500 hover:bg-red-600 text-white text-sm py-1 px-4 rounded transition"
+          >
+            Delete
+          </button>
+        </div>
+      </div>
+
       <h1 className="text-4xl font-extrabold mb-4">{post.title}</h1>
 
       {post.author?.name && (
