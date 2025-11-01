@@ -1,9 +1,5 @@
 'use client'
 
-/**
- * Sanity Studio configuration mounted at `/src/app/studio/[[...tool]]/page.tsx`
- */
-
 import { visionTool } from '@sanity/vision'
 import { defineConfig } from 'sanity'
 import { structureTool } from 'sanity/structure'
